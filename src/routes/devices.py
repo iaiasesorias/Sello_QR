@@ -109,8 +109,8 @@ def create_device():
             tecnologia_modulacion=data.get("tecnologia_modulacion"),
             frecuencias=data.get("frecuencias"),
             ganancia_antena=data.get("ganancia_antena"),
-            pire_dbm=float(data["pire_dbm"]) if data.get("pire_dbm") else None,
-            pire_mw=float(data["pire_mw"]) if data.get("pire_mw") else None
+            pire_dbm=float(data["pire_dbm"]) if "pire_dbm" in data and data["pire_dbm"] is not None else None,
+            pire_mw=float(data["pire_mw"]) if "pire_mw" in data and data["pire_mw"] is not None else None
         )
         
         db.session.add(device)
@@ -167,8 +167,8 @@ def update_device(device_id):
         device.tecnologia_modulacion = data.get("tecnologia_modulacion", device.tecnologia_modulacion)
         device.frecuencias = data.get("frecuencias", device.frecuencias)
         device.ganancia_antena = data.get("ganancia_antena", device.ganancia_antena)
-        device.pire_dbm = float(data["pire_dbm"]) if data.get("pire_dbm") else device.pire_dbm
-        device.pire_mw = float(data["pire_mw"]) if data.get("pire_mw") else device.pire_mw
+        device.pire_dbm = float(data["pire_dbm"]) if "pire_dbm" in data else device.pire_dbm
+        device.pire_mw = float(data["pire_mw"]) if "pire_mw" in data else device.pire_mw
         
         if data.get("fecha_vigencia"):
             device.fecha_vigencia = datetime.strptime(data["fecha_vigencia"], "%Y-%m-%d").date()

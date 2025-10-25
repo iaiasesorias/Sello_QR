@@ -37,7 +37,7 @@ async function loadDeviceInfo() {
   }
 }
 
-function displayDevice(device) {
+async function displayDevice(device) {
   // Ocultar loading
   document.getElementById("loading").style.display = "none";
 
@@ -109,6 +109,34 @@ function displayDevice(device) {
   setElementText("deviceTechnicalModel", device.modelo_tecnico);
   setElementText("deviceYear", device.ano_lanzamiento);
   setElementText("deviceValidityDate", formatDate(device.fecha_vigencia));
+
+  // Obtener la URL de la marca
+  let brandUrl = device.brand_url || null; // Intentar obtenerla directamente del dispositivo
+  
+  if (!brandUrl && device.marca) {
+    try {
+      const response = await fetch(`/api/brands/${encodeURIComponent(device.marca)}/info`, {
+        credentials: 'include'
+      });
+      if (response.ok) {
+        const brandInfo = await response.json();
+        brandUrl = brandInfo.url || null;
+      }
+    } catch (error) {
+      console.error('Error al obtener la URL de la marca:', error);
+    }
+  }
+
+  // Mostrar la URL de la marca si existe
+  const brandUrlRow = document.getElementById("brandUrlRow");
+  const deviceBrandUrl = document.getElementById("deviceBrandUrl");
+  
+  if (brandUrl) {
+    deviceBrandUrl.innerHTML = `<a href="${brandUrl}" target="_blank">${brandUrl}</a>`;
+    brandUrlRow.style.display = "flex";
+  } else {
+    brandUrlRow.style.display = "none";
+  }
 
   // Categorización completa
   let fullCategory = "";
@@ -400,7 +428,7 @@ function displayFiles(files) {
   filesList.innerHTML = "";
 
   // 1. Filtrar archivos que son 'IMAGEN_REFERENCIA'
-  const Files = files.filter(file => file.file_type !== 'imagen referencia');
+  const Files = files.filter(file => file.file_type !== 'imagen_referencia');
 
   if (!Files || Files.length === 0) {
     const noFilesMessage = document.createElement("p");

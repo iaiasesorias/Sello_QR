@@ -249,9 +249,9 @@ function showDeviceForm(deviceId = null) {
     if (categoriaSelect) {
         categoriaSelect.addEventListener("change", loadCategoriesForForm);
     }
-    if (subcategoriaSelect) {
-        subcategoriaSelect.addEventListener("change", loadGroups);
-    }
+    //if (subcategoriaSelect) {
+    //    subcategoriaSelect.addEventListener("change", loadGroups);
+    //}
 }
 
 function updateUserInfo() {
@@ -277,7 +277,6 @@ async function loadDevices(brandFilter = '') {
         if (response.ok) {
             const data = await response.json();
             devices = Array.isArray(data) ? data : [];
-            renderFilteredDevices(devices);
         } else {
             showToast('Error al cargar dispositivos', 'error');
         }
@@ -326,11 +325,13 @@ function renderFilteredDevices(filteredDevices) {
     }
 
     grid.innerHTML = filteredDevices.map(device => `
-        <div class="device-card">
+        <div class="device-card" onclick="${currentUser && (currentUser.role === 'public' || currentUser.role === 'qr_guest') ? `openDeviceUrl('/static/public_device.html?id=${device.id}')` : ''}">
             <div class="device-actions">
+                ${currentUser && (currentUser.role !== 'public' && currentUser.role !== 'qr_guest') ? `
                 <button class="btn btn-outline" onclick="openDeviceUrl('/static/public_device.html?id=${device.id}')" title="Ver Página Pública">
                     <i class="fas fa-external-link-alt"></i>
                 </button>
+                ` : ''}
                 ${currentUser && currentUser.role !== 'public' && currentUser.role !== 'qr_guest' ? `
                 <button class="btn btn-outline" onclick="showDeviceQR(${device.id})" title="Código QR">
                     <i class="fas fa-qrcode"></i>
@@ -533,8 +534,8 @@ async function handleDeviceSubmit(e) {
         tecnologia_modulacion: formData.get("tecnologia_modulacion"),
         frecuencias: formData.get("frecuencias"),
         ganancia_antena: formData.get("ganancia_antena"),
-        pire_dbm: formData.get("pire_dbm") ? parseFloat(formData.get("pire_dbm")) : null,
-        pire_mw: formData.get("pire_mw") ? parseFloat(formData.get("pire_mw")) : null
+                pire_dbm: (formData.get("pire_dbm") === null || formData.get("pire_dbm") === '') ? 0.0 : parseFloat(formData.get("pire_dbm")),
+        pire_mw: (formData.get("pire_mw") === null || formData.get("pire_mw") === '') ? 0.0 : parseFloat(formData.get("pire_mw"))
     };
 
     if (isEditing) {
@@ -741,11 +742,11 @@ function populateDeviceForm(device) {
     const gananciaAntenaField = document.getElementById('ganancia_antena');
     if (gananciaAntenaField) gananciaAntenaField.value = device.ganancia_antena || '';
 
-    const pireDbmField = document.getElementById('pire_dbm');
-    if (pireDbmField) pireDbmField.value = device.pire_dbm || '';
+        const pireDbmField = document.getElementById('pire_dbm');
+    if (pireDbmField) pireDbmField.value = device.pire_dbm === null ? 0.0 : device.pire_dbm;
 
-    const pireMwField = document.getElementById('pire_mw');
-    if (pireMwField) pireMwField.value = device.pire_mw || '';
+        const pireMwField = document.getElementById('pire_mw');
+    if (pireMwField) pireMwField.value = device.pire_mw === null ? 0.0 : device.pire_mw;
     
     // Load files if any
     renderExistingFiles(device.files);
@@ -798,7 +799,8 @@ async function deleteDevice(deviceId) {
             showToast('Dispositivo eliminado exitosamente', 'success');
             const responseData = await response.json();
             const marcaFiltrada = responseData.marca || sessionStorage.getItem('selectedBrand');
-            loadDevices(marcaFiltrada);
+            await loadDevices(marcaFiltrada);
+            filterDevices();
         } else {
             showToast('Error al eliminar dispositivo', 'error');
         }
