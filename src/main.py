@@ -3,8 +3,10 @@ import sys
 # DON'T CHANGE THIS !!!
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
-from flask import Flask, send_from_directory
+from flask import Flask, send_from_directory, request
 from flask_cors import CORS
+from werkzeug.utils import secure_filename
+
 from src.models.user import db
 from src.models.device import Device, DeviceFile  # Importar modelos para crear tablas
 from src.models.brand import Brand  # Importar modelo Brand
@@ -23,8 +25,9 @@ app.config['SESSION_USE_SIGNER'] = True
 
 # Configuración para manejo de archivos
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB máximo
-# Configuración para manejo de archivos
-UPLOAD_FOLDER = os.environ.get('UPLOAD_FOLDER', os.path.join(os.path.dirname(__file__), 'static', 'uploads'))
+
+# Usar disco persistente en Render (montado en /var/uploads)
+UPLOAD_FOLDER = os.environ.get('UPLOAD_FOLDER', '/var/uploads')
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 # Configurar CORS para permitir requests del frontend
@@ -40,13 +43,24 @@ app.register_blueprint(files_bp, url_prefix='/api')
 app.register_blueprint(password_protected_downloads_bp, url_prefix='/api')
 
 # Ruta para servir archivos cargados desde el disco persistente
-@app.route('/static/uploads/<path:filename>')
+@app.route('/uploads/<path:filename>')
 def uploaded_file(filename):
-    # Asegurarse de que solo se sirvan archivos dentro de la carpeta de cargas
-    return send_from_directory(UPLOAD_FOLDER, filename)
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+
+# Endpoint para subir archivos al disco persistente
+@app.route('/upload', methods=['POST'])
+def upload_file():
+    if 'file' not in request.files:
+        return "No file part", 400
+    file = request.files['file']
+    if file.filename == '':
+        return "No selected file", 400
+    filename = secure_filename(file.filename)
+    filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+    file.save(filepath)
+    return f"Archivo {filename} guardado en {app.config['UPLOAD_FOLDER']}"
+
 # Configuración de base de datos
-# app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{os.path.join(os.path.dirname(__file__),
-# 'database', 'app.db')}"
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DATABASE_URL") or \
                                   f"sqlite:///{os.path.join(os.path.dirname(__file__), 'database', 'app.db')}"
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -71,7 +85,7 @@ with app.app_context():
 def serve(path):
     static_folder_path = app.static_folder
     if static_folder_path is None:
-            return "Static folder not configured", 404
+        return "Static folder not configured", 404
 
     if path != "" and os.path.exists(os.path.join(static_folder_path, path)):
         return send_from_directory(static_folder_path, path)
@@ -81,7 +95,6 @@ def serve(path):
             return send_from_directory(static_folder_path, 'index.html')
         else:
             return "index.html not found", 404
-
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5001, debug=True)
