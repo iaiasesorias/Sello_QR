@@ -69,8 +69,12 @@
 
         <!-- Dashboard Section -->
         <section id="dashboardSection" class="dashboard-section" style="display: none;">
-            <div class="container">
-
+            	<div class="container">
+            	<div class="text-center" style="grid-column: 1 / -1; padding: 0.1rem;">
+	            <i class="fas fa-box-open" style="font-size: 3rem; color: var(--text-secondary); margin-bottom: 1rem;"></i>
+                    <h2><p style="color: var(--text-secondary);">BIENVENIDO</p></h2>
+        	    <h2><p style="color: var(--text-secondary);">Selecciona una categoría y el modelo para visualizar la información.</p></h2>
+	        </div>
                 <div class="dashboard-header">
                     <div id="brandImageContainer" class="brand-image-container" style="display: none;">
                     </div>
@@ -81,7 +85,7 @@
                     <div class="filter-group">
                         <label for="categoryFilter">Categoría:</label>
                         <select id="categoryFilter" onchange="filterDevices()">
-                            <option value="">Seleccionar categoría</option>
+                            <option value="">Todas las Categorías</option>
                         </select>
                     </div>
                     <div class="filter-group">
@@ -167,7 +171,7 @@
                             <div class="form-group">
                                 <label for="categoria">Categoría *</label>
                                 <select id="categoria" name="categoria" required onchange="loadSubcategories()">
-                                    <option value="">Seleccionar categoría</option>
+                                    <option value="">Todas las Categorías</option>
                                 </select>
                             </div>
                             <div class="form-group">

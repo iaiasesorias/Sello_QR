@@ -295,8 +295,7 @@ function filterDevices() {
     let filteredDevices = [...devices];
 
     if (categoryFilter === "") {
-        renderFilteredDevices([]); // Oculta todas las tarjetas si se selecciona 'Seleccionar categoría'
-        return;
+        // Muestra todos los dispositivos si se selecciona 'Todas las Categorías' (valor vacío)
     } else if (categoryFilter) {
         filteredDevices = filteredDevices.filter(device => device.categoria === categoryFilter);
     }
@@ -311,18 +310,51 @@ function filterDevices() {
     renderFilteredDevices(filteredDevices);
 }
 
+function getDeviceImageHtml(device) {
+    // Lógica simplificada para obtener la URL de la imagen en el dashboard
+    // Asumimos que la imagen de referencia está en device.imagen_de_referencia (si existe)
+    // o se puede construir una URL simple si el backend la proporciona.
+    // Si no, usamos un placeholder.
+    
+    let imageUrl = device.imagen_de_referencia || null;
+
+    // Si no hay una URL directa, intentamos construir una URL basada en la convención de public_device.js
+    // Esto es una simplificación, ya que la lógica completa es asíncrona y compleja.
+    // Para el dashboard, un placeholder es más seguro.
+    
+    // Si el dispositivo tiene un campo 'image_url' (como en public_device.js), lo usamos.
+    if (!imageUrl && device.image_url) {
+        imageUrl = device.image_url;
+    }
+
+    // Si el dispositivo tiene archivos y uno es una imagen, usamos el primero.
+    if (!imageUrl && device.files && device.files.length > 0) {
+        const imageFile = device.files.find(file => {
+            const fileName = (file.filename || "").toLowerCase();
+            const fileType = (file.file_type || "").toLowerCase();
+            return fileName.match(/\.(jpg|jpeg|png|gif)$/) || fileType.includes("image");
+        });
+        if (imageFile) {
+            imageUrl = imageFile.external_url || (imageFile.file_path ? `/api/files/${imageFile.id}` : null);
+        }
+    }
+
+    if (imageUrl) {
+        return `<img src="${imageUrl}" alt="Imagen de Referencia" class="device-reference-image" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                <div class="no-image-placeholder" style="display: none;">
+                    <i class="fas fa-image"></i>
+                    <p>No hay imagen</p>
+                </div>`;
+    } else {
+        return `<div class="no-image-placeholder">
+                    <i class="fas fa-image"></i>
+                    <p>No hay imagen</p>
+                </div>`;
+    }
+}
+
 function renderFilteredDevices(filteredDevices) {
     const grid = document.getElementById("devicesGrid");
-    if (filteredDevices.length === 0) {
-        grid.innerHTML = `
-            <div class="text-center" style="grid-column: 1 / -1; padding: 3rem;">
-                <i class="fas fa-box-open" style="font-size: 3rem; color: var(--text-secondary); margin-bottom: 1rem;"></i>
-                <h2><p style="color: var(--text-secondary);">BIENVENIDO</p></h2>
-                <h2><p style="color: var(--text-secondary);">Selecciona una categoría y el modelo para visualizar la información.</p></h2>
-            </div>
-        `;
-        return;
-    }
 
     grid.innerHTML = filteredDevices.map(device => `
         <div class="device-card" onclick="${currentUser && (currentUser.role === 'public' || currentUser.role === 'qr_guest') ? `openDeviceUrl('/static/public_device.html?id=${device.id}')` : ''}">
@@ -344,43 +376,17 @@ function renderFilteredDevices(filteredDevices) {
                     <i class="fas fa-trash"></i>
                 </button>
                 ` : ''}
+
             </div>
-            <div class="device-header">
-                <div class="device-title">${device.marca} ${device.nombre_catalogo}</div>
+	    <div class="device-header">
+	        <class="device-title">${device.nombre_catalogo}
 	    </div>
+            <div class="device-image-container">
+                ${getDeviceImageHtml(device)}
+            </div>
             <div class="device-header">
                 <div class="device-subtitle">${device.categoria} - ${device.subcategoria}</div>
 	    </div>
-            
-            <div class="device-info">
-                <div class="device-info-item">
-                    <span class="device-info-label">Modelo Comercial:</span>
-                    <span class="device-info-value">${device.modelo_comercial}</span>
-                </div>
-                <div class="device-info-item">
-                    <span class="device-info-label">Modelo Técnico:</span>
-                    <span class="device-info-value">${device.modelo_tecnico}</span>
-                </div>
-                <div class="device-info-item">
-                    <span class="device-info-label">Año:</span>
-                    <span class="device-info-value">${device.ano_lanzamiento}</span>
-                </div>
-                <div class="device-info-item">
-                    <span class="device-info-label">Vigencia:</span>
-                    <span class="device-info-value">${formatDate(device.fecha_vigencia)}</span>
-                </div>
-            </div>
-            
-            ${device.files && device.files.length > 0 ? `
-                <div class="device-files">
-                    <div class="device-files-title">Archivos (${device.files.length}):</div>
-                    <div class="file-list">
-                        ${device.files.map(file => `
-                            <span class="file-tag">${file.file_type.replace("_", " ")}</span>
-                        `).join("")}
-                    </div>
-                </div>
-            ` : ""}
         </div>
     `).join("");
 }
@@ -914,8 +920,7 @@ function filterDevices() {
     let filteredDevices = [...devices];
     
     if (categoryFilter === "") {
-        renderFilteredDevices([]); // Oculta todas las tarjetas si se selecciona 'Seleccionar categoría'
-        return;
+        // Muestra todos los dispositivos si se selecciona 'Todas las Categorías' (valor vacío)
     } else if (categoryFilter) {
         filteredDevices = filteredDevices.filter(device => device.categoria === categoryFilter);
     }
@@ -1153,7 +1158,7 @@ function showBrandIndicator(brandName) {
         <div class="brand-indicator-content">
             <div class="brand-info">
                 <i class="fas fa-tag"></i>
-                <span class="brand-label">Marca seleccionada:</span>
+                <span class="brand-label">Marca:</span>
                 <span class="brand-name">${brandName}</span>
             </div>
             <div class="brand-actions">

@@ -8,7 +8,7 @@ if defined _OLD_CODEPAGE (
     "%SystemRoot%\System32\chcp.com" 65001 > nul
 )
 
-set VIRTUAL_ENV=e:\Pagina Carmona\Carmona-app_V13_17_5\venv
+set VIRTUAL_ENV=e:\Pagina Carmona\Carmona-app_V13_18_5\venv
 
 if not defined PROMPT set PROMPT=$P$G
 

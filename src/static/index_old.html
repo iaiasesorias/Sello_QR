@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Información EPR - Gestión de Dispositivos</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="icon" type="image/png" href="favicon.png">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <i class="fas fa-qrcode"></i>
+                    <span> QR Información EPR</span>
+                </div>
+                <nav class="nav" id="nav">
+                    <div class="user-info" id="userInfo" style="display: none;">
+			<span id="userEmail" style="display: none;"></span>
+                        <span id="userRole" class="role-badge"></span>
+                        <button class="btn btn-outline" onclick="logout()">
+                            <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+                        </button>
+                    </div>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main">
+        <!-- Login Section -->
+        <section id="loginSection" class="login-section">
+            <div class="container">
+                <div class="login-card">
+                    <div class="login-header">
+                        <i class="fas fa-qrcode"></i>
+                        <h1>QR Información EPR</h1>
+                        <p>Sistema de Gestión de Dispositivos</p>
+                    </div>
+                    <form id="loginForm" class="login-form">
+                        <div class="form-group">
+                            <label for="email">
+                                <i class="fas fa-envelope"></i>
+                                Correo Electrónico
+                            </label>
+                            <input type="email" id="email" name="email" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="password">
+                                <i class="fas fa-lock"></i>
+                                Contraseña
+                            </label>
+                            <input type="password" id="password" name="password" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-full">
+                            <i class="fas fa-sign-in-alt"></i>
+                            Iniciar Sesión
+                        </button>
+                    </form>
+                    <div class="login-footer">
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Dashboard Section -->
+        <section id="dashboardSection" class="dashboard-section" style="display: none;">
+            	<div class="container">
+            	<div class="text-center" style="grid-column: 1 / -1; padding: 0.1rem;">
+	            <i class="fas fa-box-open" style="font-size: 3rem; color: var(--text-secondary); margin-bottom: 1rem;"></i>
+                    <h2><p style="color: var(--text-secondary);">BIENVENIDO</p></h2>
+        	    <h2><p style="color: var(--text-secondary);">Selecciona una categoría y el modelo para visualizar la información.</p></h2>
+	        </div>
+                <div class="dashboard-header">
+                    <div id="brandImageContainer" class="brand-image-container" style="display: none;">
+                    </div>
+                </div>
+
+                <!-- Filters -->
+                <div class="filters">
+                    <div class="filter-group">
+                        <label for="categoryFilter">Categoría:</label>
+                        <select id="categoryFilter" onchange="filterDevices()">
+                            <option value="">Seleccionar categoría</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="searchFilter">Buscar:</label>
+                        <input type="text" id="searchFilter" placeholder="Modelo técnico o comercial..." onkeyup="filterDevices()">
+                    </div>
+                    <div class="filter-group" id="newDeviceButtonContainer" style="margin-left: auto;">
+                        <button class="btn btn-primary" onclick="showDeviceForm()">
+                            <i class="fas fa-plus"></i>
+                            Nuevo Dispositivo
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Devices List -->
+                <div class="devices-grid" id="devicesGrid">
+                    <!-- Devices will be loaded here -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Device Form Section -->
+        <section id="deviceFormSection" class="device-form-section" style="display: none;">
+            <div class="container">
+                <div class="form-header">
+                    <h1 id="formTitle">Nuevo Dispositivo</h1>
+                        <button type="button" class="btn btn-outline" onclick="showDashboard()">
+                            Cancelar
+                        </button>
+                </div>
+
+                <form id="deviceForm" class="device-form">
+                    <input type="hidden" id="deviceId" name="deviceId">
+                    
+                    <!-- Basic Information -->
+                    <div class="form-section">
+                        <h2><i class="fas fa-info-circle"></i> Información Básica</h2>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="marca">Fabricante *</label>
+                                <input type="text" id="marca" name="marca" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="nombre_catalogo">Nombre Catálogo *</label>
+                                <input type="text" id="nombre_catalogo" name="nombre_catalogo" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="modelo_comercial">Modelo Comercial *</label>
+                                <input type="text" id="modelo_comercial" name="modelo_comercial" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="modelo_tecnico">Modelo Técnico *</label>
+                                <input type="text" id="modelo_tecnico" name="modelo_tecnico" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="ano_lanzamiento">Año Lanzamiento *</label>
+                                <input type="number" id="ano_lanzamiento" name="ano_lanzamiento" min="2000" max="2030" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="fecha_vigencia">Fecha Inicio Vigencia *</label>
+                                <input type="date" id="fecha_vigencia" name="fecha_vigencia" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="importador_representante">Importador o representante (Chile)</label>
+                                <input type="text" id="importador_representante" name="importador_representante">
+                            </div>
+                            <div class="form-group">
+                                <label for="domicilio">Domicilio</label>
+                                <input type="text" id="domicilio" name="domicilio">
+                            </div>
+                            <div class="form-group">
+                                <label for="correo_contacto">Correo de contacto</label>
+                                <input type="email" id="correo_contacto" name="correo_contacto">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Category Information -->
+                    <div class="form-section" id="categorySection">
+                        <h2><i class="fas fa-tags"></i> Categorización</h2>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="categoria">Categoría *</label>
+                                <select id="categoria" name="categoria" required onchange="loadSubcategories()">
+                                    <option value="">Seleccionar categoría</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="subcategoria">Subcategoría *</label>
+                                <select id="subcategoria" name="subcategoria" required onchange="loadGroups()">
+                                    <option value="">Seleccionar subcategoría</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="grupo">Grupo *</label>
+                                <select id="grupo" name="grupo" required>
+                                    <option value="">Seleccionar grupo</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Technical Information -->
+                    <div class="form-section">
+                        <h2><i class="fas fa-microchip"></i> Información Técnica</h2>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="tecnologia_modulación">Tecnología o Modulación</label>
+                                <input type="text" id="tecnologia_modulacion" name="tecnologia_modulacion">
+                            </div>
+                            <div class="form-group">
+                                <label for="frecuencias">Frecuencias</label>
+                                <input type="text" id="frecuencias" name="frecuencias">
+                            </div>
+                            <div class="form-group">
+                                <label for="ganancia_antena">Ganancia Antena</label>
+                                <input type="text" id="ganancia_antena" name="ganancia_antena">
+                            </div>
+                            <div class="form-group">
+                                <label for="pire_dbm">P.I.R.E (dBm)</label>
+                                <input type="number" step="0.01" id="pire_dbm" name="pire_dbm">
+                            </div>
+                            <div class="form-group">
+                                <label for="pire_mw">P.I.R.E (mW)</label>
+                                <input type="number" step="0.01" id="pire_mw" name="pire_mw">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Comments -->
+                    <div class="form-section">
+                        <h2><i class="fas fa-comment"></i> Comentarios</h2>
+                        <div class="form-group">
+                            <label for="comentarios">Comentarios</label>
+                            <textarea id="comentarios" name="comentarios" rows="3"></textarea>
+                        </div>
+
+                    </div>
+
+                    <!-- Files Section -->
+                    <div class="form-section">
+                        <h2><i class="fas fa-file"></i> Archivos Asociados</h2>
+                        <div class="files-container" id="filesContainer">
+                            <!-- Files will be loaded here -->
+                        </div>
+                        <button type="button" class="btn btn-outline" onclick="addFileInput()">
+                            <i class="fas fa-plus"></i>
+                            Agregar Archivo
+                        </button>
+                    </div>
+
+                    <!-- Form Actions -->
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-outline" onclick="showDashboard()">
+                            Cancelar
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i>
+                            Guardar Dispositivo
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </section>
+    </main>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay" style="display: none;">
+        <div class="loading-spinner">
+            <i class="fas fa-spinner fa-spin"></i>
+            <p>Cargando...</p>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <script src="js/app.js"></script>
+</body>
+</html>
+

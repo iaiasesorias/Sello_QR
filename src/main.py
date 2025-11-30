@@ -23,7 +23,9 @@ app.config['SESSION_USE_SIGNER'] = True
 
 # Configuración para manejo de archivos
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB máximo
-app.config['UPLOAD_FOLDER'] = os.path.join(os.path.dirname(__file__), 'static', 'uploads')
+# Configuración para manejo de archivos
+UPLOAD_FOLDER = os.environ.get("UPLOAD_FOLDER", os.path.join(os.path.dirname(__file__), 'static', 'uploads'))
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 # Configurar CORS para permitir requests del frontend
 CORS(app, supports_credentials=True)
@@ -36,6 +38,12 @@ app.register_blueprint(qr_bp)  # Sin prefijo /api para las páginas públicas
 app.register_blueprint(public_bp)
 app.register_blueprint(files_bp, url_prefix='/api')
 app.register_blueprint(password_protected_downloads_bp, url_prefix='/api')
+
+# Ruta para servir archivos cargados desde el disco persistente
+@app.route('/static/uploads/<path:filename>')
+def uploaded_file(filename):
+    # Asegurarse de que solo se sirvan archivos dentro de la carpeta de cargas
+    return send_from_directory(UPLOAD_FOLDER, filename)
 # Configuración de base de datos
 # app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{os.path.join(os.path.dirname(__file__),
 # 'database', 'app.db')}"
