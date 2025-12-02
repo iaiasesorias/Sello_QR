@@ -8,14 +8,14 @@ from src.models.device import Device, DeviceFile
 files_bp = Blueprint('files', __name__)
 
 # Ruta base de la aplicación para construir rutas relativas
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from flask import current_app # Añadir esta importación
 
 # Rutas relativas a BASE_DIR
-UPLOAD_FOLDER_RELATIVE = os.path.join('src', 'static', 'uploads', 'brands')
+# La ruta relativa ahora será solo la subcarpeta dentro de UPLOAD_FOLDER
 
 # Rutas absolutas para uso interno del servidor
-UPLOAD_FOLDER = os.path.join(BASE_DIR, UPLOAD_FOLDER_RELATIVE)
-UPLOAD_FOLDER_DEVICES = UPLOAD_FOLDER # Ambas rutas de subida apuntan al mismo directorio base de marcas
+# UPLOAD_FOLDER se obtendrá de current_app.config['UPLOAD_FOLDER'] en las funciones.
+UPLOAD_FOLDER_DEVICES = 'brands' # Subcarpeta dentro de UPLOAD_FOLDER
 
 ALLOWED_EXTENSIONS = {"pdf", "zip", "jpg", "jpeg", "png", "gif"}
 MAX_FILE_SIZE = 15 * 1024 * 1024  # 15MB
@@ -26,7 +26,7 @@ def allowed_file(filename):
 
 def get_device_upload_folder_relative(brand_name, device_name):
     """Obtener la ruta de subida relativa para archivos de un dispositivo específico"""
-    return os.path.join(UPLOAD_FOLDER_RELATIVE, secure_filename(brand_name), secure_filename(device_name))
+    return os.path.join(UPLOAD_FOLDER_DEVICES, secure_filename(brand_name), secure_filename(device_name))
 
 def require_admin():
     """Middleware para verificar rol de administrador"""
@@ -70,13 +70,14 @@ def upload_brand_logo():
         return jsonify({'error': f'Archivo muy grande. Máximo {MAX_FILE_SIZE // (1024*1024)}MB'}), 400
     
     # Crear directorio de marca si no existe
-    brand_folder_absolute = os.path.join(UPLOAD_FOLDER, secure_filename(brand_name))
+    base_upload_folder = current_app.config['UPLOAD_FOLDER']
+    brand_folder_absolute = os.path.join(base_upload_folder, UPLOAD_FOLDER_DEVICES, secure_filename(brand_name))
     os.makedirs(brand_folder_absolute, exist_ok=True)
     
     # Generar nombre único para el archivo del logo
     filename = f"{secure_filename(brand_name)}.{file.filename.rsplit('.', 1)[1].lower()}"
     file_path_absolute = os.path.join(brand_folder_absolute, filename)
-    file_path_relative = os.path.join(UPLOAD_FOLDER_RELATIVE, secure_filename(brand_name), filename)
+    file_path_relative = os.path.join(UPLOAD_FOLDER_DEVICES, secure_filename(brand_name), filename)
     
     try:
         file.save(file_path_absolute)
@@ -152,7 +153,8 @@ def upload_device_files():
     
     # Crear directorio de marca y dispositivo si no existen usando la nueva función
     device_folder_relative = get_device_upload_folder_relative(device.marca, device.nombre_catalogo)
-    device_folder_absolute = os.path.join(BASE_DIR, device_folder_relative)
+    base_upload_folder = current_app.config['UPLOAD_FOLDER']
+    device_folder_absolute = os.path.join(base_upload_folder, device_folder_relative)
     os.makedirs(device_folder_absolute, exist_ok=True)
     
     # Generar nombre único para el archivo
@@ -242,7 +244,8 @@ def upload_file():
     
     # Crear directorio de marca y dispositivo si no existen
     device_folder_relative = get_device_upload_folder_relative(device.marca, device.nombre_catalogo)
-    device_folder_absolute = os.path.join(BASE_DIR, device_folder_relative)
+    base_upload_folder = current_app.config['UPLOAD_FOLDER']
+    device_folder_absolute = os.path.join(base_upload_folder, device_folder_relative)
     os.makedirs(device_folder_absolute, exist_ok=True)
     
     # Generar nombre único para el archivo
@@ -286,7 +289,8 @@ def download_file(file_id):
         return jsonify({'external_url': device_file.external_url})
     
     # Construir la ruta absoluta para servir el archivo
-    file_path_absolute = os.path.join(BASE_DIR, device_file.file_path)
+    base_upload_folder = current_app.config['UPLOAD_FOLDER']
+    file_path_absolute = os.path.join(base_upload_folder, device_file.file_path)
 
     if not device_file.file_path or not os.path.exists(file_path_absolute):
         return jsonify({'error': 'Archivo no encontrado'}), 404
@@ -304,12 +308,13 @@ def delete_file(file_id):
     
     # Eliminar archivo físico si existe
     if device_file.file_path:
-        file_path_absolute = os.path.join(BASE_DIR, device_file.file_path)
-        if os.path.exists(file_path_absolute):
-            try:
-                os.remove(file_path_absolute)
-            except Exception as e:
-                print(f"Error al eliminar archivo físico: {e}")
+        base_upload_folder = current_app.config['UPLOAD_FOLDER']
+    file_path_absolute = os.path.join(base_upload_folder, device_file.file_path)
+    if os.path.exists(file_path_absolute):
+        try:
+            os.remove(file_path_absolute)
+        except Exception as e:
+            print(f"Error al eliminar archivo físico: {e}")
     
     db.session.delete(device_file)
     db.session.commit()

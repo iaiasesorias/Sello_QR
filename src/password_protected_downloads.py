@@ -10,7 +10,8 @@ DOWNLOAD_PASSWORD = "Carmona2025"
 
 # Directorio donde se almacenan los archivos adjuntos
 # Corregido para apuntar a la ubicación real de los archivos
-UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static", "uploads")
+from flask import current_app # Añadir esta importación
+# UPLOAD_FOLDER se obtendrá de current_app.config['UPLOAD_FOLDER'] en las funciones.
 
 @password_protected_downloads_bp.route("/download-protected-file/<int:file_id>", methods=["GET"])
 def download_protected_file(file_id):
@@ -47,11 +48,12 @@ def download_protected_file(file_id):
             # Si es relativa, hay dos casos posibles:
             if file_path.startswith('src/'):
                 # La ruta ya incluye 'src/', usar desde el directorio raíz del proyecto
-                project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-                full_file_path = os.path.join(project_root, file_path)
+                upload_folder = current_app.config['UPLOAD_FOLDER']
+                full_file_path = os.path.join(upload_folder, file_path)
             else:
                 # La ruta es relativa al UPLOAD_FOLDER
-                full_file_path = os.path.join(UPLOAD_FOLDER, file_path)
+                upload_folder = current_app.config['UPLOAD_FOLDER']
+                full_file_path = os.path.join(upload_folder, file_path)
         
         # Normalizar la ruta completa para el sistema operativo actual
         full_file_path = os.path.normpath(full_file_path)
@@ -63,13 +65,14 @@ def download_protected_file(file_id):
             
             # Alternativa 1: Desde el directorio raíz del proyecto
             if not file_path.startswith('src/'):
-                project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-                alt_path1 = os.path.join(project_root, 'src', 'static', 'uploads', file_path)
+                upload_folder = current_app.config['UPLOAD_FOLDER']
+                alt_path1 = os.path.join(upload_folder, file_path) # La ruta ya está corregida en los otros blueprints
                 alternative_paths.append(alt_path1)
             
             # Alternativa 2: Solo el nombre del archivo en UPLOAD_FOLDER
             filename_only = os.path.basename(file_path)
-            alt_path2 = os.path.join(UPLOAD_FOLDER, filename_only)
+            upload_folder = current_app.config['UPLOAD_FOLDER']
+            alt_path2 = os.path.join(upload_folder, filename_only)
             alternative_paths.append(alt_path2)
             
             # Probar rutas alternativas
@@ -85,7 +88,7 @@ def download_protected_file(file_id):
                     "db_file_path": device_file.file_path,
                     "normalized_path": file_path,
                     "full_file_path": full_file_path,
-                    "upload_folder": UPLOAD_FOLDER,
+                    "upload_folder": current_app.config['UPLOAD_FOLDER'],
                     "alternatives_tried": alternative_paths,
                     "file_exists": os.path.exists(full_file_path)
                 }
@@ -130,11 +133,12 @@ def download_protected_file_by_path(filename):
         safe_filename = filename.replace('..', '').replace('//', '/')
         
         # Construir la ruta completa al archivo
-        full_file_path = os.path.join(UPLOAD_FOLDER, safe_filename)
+        upload_folder = current_app.config['UPLOAD_FOLDER']
+        full_file_path = os.path.join(upload_folder, safe_filename)
         full_file_path = os.path.normpath(full_file_path)
         
         # Verificar que la ruta esté dentro del directorio de uploads (seguridad)
-        if not full_file_path.startswith(os.path.abspath(UPLOAD_FOLDER)):
+        if not full_file_path.startswith(os.path.abspath(current_app.config['UPLOAD_FOLDER'])):
             abort(403, description="Acceso denegado: ruta no permitida.")
         
         # Verificar si el archivo existe

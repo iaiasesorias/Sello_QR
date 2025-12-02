@@ -8,7 +8,9 @@ import os
 import shutil # Importar shutil para eliminar directorios no vacíos
 from werkzeug.utils import secure_filename
 
-UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'static', 'uploads', 'brands')
+from flask import current_app # Añadir esta importación
+# UPLOAD_FOLDER se obtendrá de current_app.config['UPLOAD_FOLDER'] en las funciones.
+# La subcarpeta 'brands' se añadirá dentro de las funciones.
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif"}
 
 def allowed_file(filename):
@@ -117,7 +119,8 @@ def create_device():
         db.session.commit()
 
         # Crear directorio de marca y dispositivo si no existen
-        brand_folder = os.path.join(UPLOAD_FOLDER, secure_filename(device.marca))
+        base_upload_folder = current_app.config['UPLOAD_FOLDER']
+        brand_folder = os.path.join(base_upload_folder, 'brands', secure_filename(device.marca))
         device_folder = os.path.join(brand_folder, secure_filename(device.nombre_catalogo))
         os.makedirs(device_folder, exist_ok=True)
 
@@ -146,8 +149,9 @@ def update_device(device_id):
         device.nombre_catalogo = data.get("nombre_catalogo", device.nombre_catalogo)
         # Renombrar la carpeta del dispositivo si el nombre del catálogo ha cambiado
         if old_nombre_catalogo != device.nombre_catalogo:
-            old_device_folder = os.path.join(UPLOAD_FOLDER, secure_filename(device.marca), secure_filename(old_nombre_catalogo))
-            new_device_folder = os.path.join(UPLOAD_FOLDER, secure_filename(device.marca), secure_filename(device.nombre_catalogo))
+            base_upload_folder = current_app.config['UPLOAD_FOLDER']
+            old_device_folder = os.path.join(base_upload_folder, 'brands', secure_filename(device.marca), secure_filename(old_nombre_catalogo))
+            new_device_folder = os.path.join(base_upload_folder, 'brands', secure_filename(device.marca), secure_filename(device.nombre_catalogo))
             if os.path.exists(old_device_folder):
                 os.rename(old_device_folder, new_device_folder)
             else:
@@ -200,7 +204,8 @@ def delete_device(device_id):
     db.session.commit()
 
     # Eliminar la carpeta del dispositivo si existe y está vacía
-    device_folder = os.path.join(UPLOAD_FOLDER, secure_filename(device_marca), secure_filename(device_nombre_catalogo))
+    base_upload_folder = current_app.config['UPLOAD_FOLDER']
+    device_folder = os.path.join(base_upload_folder, 'brands', secure_filename(device_marca), secure_filename(device_nombre_catalogo))
     if os.path.exists(device_folder) and not os.listdir(device_folder):
         os.rmdir(device_folder)
 
@@ -316,7 +321,8 @@ def create_brand():
             return jsonify({"error": "El usuario ya existe"}), 400
         
         # Crear la carpeta de la marca
-        brand_upload_folder = os.path.join(UPLOAD_FOLDER, secure_filename(marca))
+        base_upload_folder = current_app.config['UPLOAD_FOLDER']
+        brand_upload_folder = os.path.join(base_upload_folder, 'brands', secure_filename(marca))
         os.makedirs(brand_upload_folder, exist_ok=True)
         
         # Crear un dispositivo temporal para mantener compatibilidad
@@ -342,7 +348,7 @@ def create_brand():
             filename = secure_filename(f"{marca}.{file_extension}")
             image_path_full = os.path.join(brand_upload_folder, filename)
             image.save(image_path_full)
-            image_path_relative = os.path.join( "src", "static", "uploads", "brands", secure_filename(marca), filename)
+            image_path_relative = os.path.join("brands", secure_filename(marca), filename)
 
             # Guardar la ruta de la imagen en la tabla DeviceFile
             new_device_file = DeviceFile(
@@ -416,8 +422,9 @@ def update_brand(brand_name):
                 return jsonify({"error": "El nuevo nombre de marca ya existe"}), 400
 
         # Renombrar la carpeta de la marca si el nombre ha cambiado
-        old_brand_folder = os.path.join(UPLOAD_FOLDER, secure_filename(brand_name))
-        new_brand_folder = os.path.join(UPLOAD_FOLDER, secure_filename(new_marca))
+        base_upload_folder = current_app.config['UPLOAD_FOLDER']
+        old_brand_folder = os.path.join(base_upload_folder, 'brands', secure_filename(brand_name))
+        new_brand_folder = os.path.join(base_upload_folder, 'brands', secure_filename(new_marca))
         
         if new_marca != brand_name and os.path.exists(old_brand_folder):
             os.rename(old_brand_folder, new_brand_folder)
@@ -452,11 +459,11 @@ def update_brand(brand_name):
         # Manejar la actualización de la imagen
         if image and allowed_file(image.filename):
             # Obtener la ruta absoluta base del proyecto
-            base_path = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+            base_upload_folder = current_app.config['UPLOAD_FOLDER']
             
             # 1. Eliminar la imagen anterior si existe
             if brand and brand.image_path:
-                old_image_path_full = os.path.join(base_path, brand.image_path)
+                old_image_path_full = os.path.join(base_upload_folder, brand.image_path)
                 if os.path.exists(old_image_path_full):
                     os.remove(old_image_path_full)
             
@@ -465,7 +472,7 @@ def update_brand(brand_name):
             filename = secure_filename(f"{new_marca}.{file_extension}")
             image_path_full = os.path.join(new_brand_folder, filename)
             image.save(image_path_full)
-            image_path_relative = os.path.join( "src", "static", "uploads", "brands", secure_filename(new_marca), filename)
+            image_path_relative = os.path.join("brands", secure_filename(new_marca), filename)
             
             # 3. Actualizar la ruta en Brand
             if brand:
@@ -524,7 +531,8 @@ def delete_brand(brand_name):
             brand_images = DeviceFile.query.filter_by(device_id=device.id, file_type="imagen_marca").all()
             for img in brand_images:
                 # Construir la ruta completa para eliminar el archivo
-                full_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), img.file_path)
+                base_upload_folder = current_app.config['UPLOAD_FOLDER']
+                full_path = os.path.join(base_upload_folder, img.file_path)
                 if os.path.exists(full_path):
                     os.remove(full_path)
                 db.session.delete(img)
@@ -545,7 +553,8 @@ def delete_brand(brand_name):
         db.session.commit()
 
         # 5. Eliminar la carpeta de la marca (incluyendo su contenido)
-        brand_folder = os.path.join(UPLOAD_FOLDER, secure_filename(brand_name))
+        base_upload_folder = current_app.config['UPLOAD_FOLDER']
+        brand_folder = os.path.join(base_upload_folder, 'brands', secure_filename(brand_name))
         if os.path.exists(brand_folder):
             shutil.rmtree(brand_folder) # Elimina el directorio y todo su contenido
         
@@ -570,7 +579,8 @@ def get_brand_image(brand_name):
 
             brand_image = DeviceFile.query.filter_by(device_id=temp_device.id, file_type="imagen_marca").first()
             
-            if not brand_image or not os.path.exists(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), brand_image.file_path)):
+            base_upload_folder = current_app.config['UPLOAD_FOLDER']
+            if not brand_image or not os.path.exists(os.path.join(base_upload_folder, brand_image.file_path)):
                 return jsonify({"error": "Imagen no encontrada para esta marca"}), 404
             
             # Usar la ruta de DeviceFile
@@ -581,7 +591,8 @@ def get_brand_image(brand_name):
             
         # La ruta relativa es: src/static/uploads/brands/MARCA/imagen.ext
         # Necesitamos el directorio base (UPLOAD_FOLDER) y el nombre del archivo
-        brand_folder = os.path.join(UPLOAD_FOLDER, secure_filename(brand_name))
+        base_upload_folder = current_app.config['UPLOAD_FOLDER']
+        brand_folder = os.path.join(base_upload_folder, 'brands', secure_filename(brand_name))
         filename = os.path.basename(image_path)
         
         return send_from_directory(brand_folder, filename)
