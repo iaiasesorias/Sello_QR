@@ -472,6 +472,15 @@ function displayFiles(files) {
     fileType.className = "file-type";
     fileType.textContent = formatFileType(file.file_type);
 
+    // Indicador de Password
+    const passwordIndicator = document.createElement("div");
+    passwordIndicator.className = "password-indicator";
+    if (file.requires_password) {
+      passwordIndicator.innerHTML = '<span class="badge badge-warning"><i class="fas fa-lock"></i> Password Habilitado</span>';
+    } else {
+      passwordIndicator.innerHTML = '<span class="badge badge-info"><i class="fas fa-lock-open"></i> Password No Habilitado</span>';
+    }
+
     const fileDetails = document.createElement("div");
     fileDetails.className = "file-details";
 
@@ -495,6 +504,7 @@ function displayFiles(files) {
 
     fileInfo.appendChild(fileName);
     fileInfo.appendChild(fileType);
+    fileInfo.appendChild(passwordIndicator);
     if (fileDetails.children.length > 0) {
       fileInfo.appendChild(fileDetails);
     }
@@ -509,7 +519,11 @@ function displayFiles(files) {
       downloadBtn.className = "file-action-btn download-btn";
       downloadBtn.innerHTML = '<i class="fas fa-download"></i> Descargar';
       downloadBtn.onclick = () => {
-        showPasswordModal(file.id);
+        if (file.requires_password) {
+          showPasswordModal(file.id);
+        } else {
+          window.open(`/api/download-protected-file/${encodeURIComponent(file.id)}`, '_blank');
+        }
       };
       fileActions.appendChild(downloadBtn);
     }
@@ -668,7 +682,7 @@ function createPasswordModal() {
           <button class="password-modal-close" onclick="closePasswordModal()">&times;</button>
         </div>
         <div class="password-modal-body">
-          <p>Contenido restringido. Solicitar información a SUBTEL:</p>
+          <p>Contenido restringido. Solicitar información a SUBTEL (Password):</p>
           <div class="password-input-container">
             <input type="password" id="passwordInput" placeholder="Contraseña" autocomplete="off">
             <button type="button" class="password-toggle" onclick="togglePasswordVisibility()">

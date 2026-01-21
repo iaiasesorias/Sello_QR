@@ -107,6 +107,7 @@ def upload_device_files():
     device_id = request.form.get('device_id')
     file_type = request.form.get('file_type')
     visibility = request.form.get('visibility', 'public')
+    requires_password = request.form.get('requires_password') == 'true'
     external_url = request.form.get('external_url')
     
     if not device_id or not file_type:
@@ -124,6 +125,7 @@ def upload_device_files():
             file_name=request.form.get('file_name', 'Documento externo'),
             file_type=file_type,
             visibility=visibility,
+            requires_password=requires_password,
             external_url=external_url
         )
         
@@ -171,6 +173,7 @@ def upload_device_files():
             file_path=file_path_relative, # Almacenar ruta relativa
             file_type=file_type,
             visibility=visibility,
+            requires_password=requires_password,
             file_size=file_size
         )
         
@@ -198,6 +201,7 @@ def upload_file():
     device_id = request.form.get('device_id')
     file_type = request.form.get('file_type')
     visibility = request.form.get('visibility', 'public')
+    requires_password = request.form.get('requires_password') == 'true'
     external_url = request.form.get('external_url')
     
     if not device_id or not file_type:
@@ -215,6 +219,7 @@ def upload_file():
             file_name=request.form.get('file_name', 'Documento externo'),
             file_type=file_type,
             visibility=visibility,
+            requires_password=requires_password,
             external_url=external_url
         )
         
@@ -261,6 +266,7 @@ def upload_file():
             file_path=file_path_relative, # Almacenar ruta relativa
             file_type=file_type,
             visibility=visibility,
+            requires_password=requires_password,
             file_size=file_size
         )
         
@@ -333,6 +339,7 @@ def update_file(file_id):
     
     device_file.file_name = data.get('file_name', device_file.file_name)
     device_file.visibility = data.get('visibility', device_file.visibility)
+    device_file.requires_password = data.get('requires_password', device_file.requires_password)
     device_file.external_url = data.get('external_url', device_file.external_url)
     
     db.session.commit()

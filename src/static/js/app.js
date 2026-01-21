@@ -652,6 +652,7 @@ async function uploadDeviceFiles(deviceId, formData) {
     for (let i = 0; i < fileGroups.length; i++) {
         const fileType = formData.get(`file_type_${i}`);
         const visibility = formData.get(`visibility_${i}`) || 'public';
+        const requiresPassword = formData.get(`requires_password_${i}`) === 'on';
         const file = formData.get(`file_${i}`);
         const externalUrl = formData.get(`external_url_${i}`);
         
@@ -666,6 +667,7 @@ async function uploadDeviceFiles(deviceId, formData) {
         uploadFormData.append('device_id', deviceId);
         uploadFormData.append('file_type', fileType);
         uploadFormData.append('visibility', visibility);
+        uploadFormData.append('requires_password', requiresPassword);
         
         if (file && file.size > 0) {
             uploadFormData.append('file', file);
@@ -836,6 +838,13 @@ function renderExistingFiles(files) {
                     <label>Visibilidad:</label>
                     <span>${file.visibility === 'public' ? 'Público' : 'Privado'}</span>
                 </div>
+                <div class="form-group">
+                    <label>Password:</label>
+                    <span class="badge ${file.requires_password ? 'badge-warning' : 'badge-info'}">
+                        <i class="fas ${file.requires_password ? 'fa-lock' : 'fa-lock-open'}"></i>
+                        ${file.requires_password ? 'Habilitado' : 'No habilitado'}
+                    </span>
+                </div>
                 ${file.external_url ? `
                     <div class="form-group">
                         <label>URL Externa:</label>
@@ -944,6 +953,10 @@ function addFileInput() {
                         <option value="public">Público</option>
                         <option value="private">Privado</option>
                     </select>
+                </div>
+                <div class="form-group" style="display: flex; align-items: center; gap: 10px; padding-top: 25px;">
+                    <input type="checkbox" name="requires_password_${fileIndex}" id="requires_password_${fileIndex}" style="width: 20px; height: 20px;">
+                    <label for="requires_password_${fileIndex}" style="margin-bottom: 0;">Ticket Habilitación (Password)</label>
                 </div>
                 <button type="button" class="btn btn-danger btn-sm" onclick="removeFileInput(${fileIndex})">
                     <i class="fas fa-trash"></i> Eliminar

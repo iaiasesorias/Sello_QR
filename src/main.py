@@ -16,6 +16,7 @@ from src.routes.public import public_bp
 from src.routes.qr_routes import qr_bp
 from src.routes.files import files_bp
 from src.password_protected_downloads import password_protected_downloads_bp
+from src.utils.migrations import run_migrations
 
 app = Flask(__name__, static_folder=os.path.join(os.path.dirname(__file__), 'static'))
 app.config['SECRET_KEY'] = 'asdf#FGSgvasgf$5$WGT'
@@ -53,8 +54,9 @@ app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DATABASE_URL") or \
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db.init_app(app)
 
-# Crear tablas y datos iniciales
+# Ejecutar migraciones automáticas antes de crear tablas
 with app.app_context():
+    run_migrations(app)
     db.create_all()
     
     # Crear usuario administrador por defecto si no existe

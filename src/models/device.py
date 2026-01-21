@@ -66,6 +66,7 @@ class DeviceFile(db.Model):
     visibility = db.Column(db.String(10), nullable=False, default='public')  # 'public' o 'private'
     external_url = db.Column(db.String(500))
     file_size = db.Column(db.Integer)
+    requires_password = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     def __repr__(self):
@@ -81,6 +82,7 @@ class DeviceFile(db.Model):
             'visibility': self.visibility,
             'external_url': self.external_url,
             'file_size': self.file_size,
+            'requires_password': self.requires_password,
             'created_at': self.created_at.isoformat() if self.created_at else None
         }
 

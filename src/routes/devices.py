@@ -252,7 +252,7 @@ def get_subcategories(category):
         "Teléfono celular": ["Smartphone", "Feature Phone"],
         "Reloj Inteligente": ["Smart Watch", "Fitness Tracker"],
         "Gafas y Visores": ["VR Headset", "AR Glasses"],
-        "Audio": ["Auriculares", "Parlantes", "Soundbar"],
+        "Audio": ["Auriculares", "Accesorios", "Micrófonos", "Parlantes", "Soundbar", "Tornamesas", "Otros"],
         "TV & Home": ["Smart TV", "Streaming Device", "Home Assistant"],
         "Accesorios": ["Cargadores", "Cables", "Fundas"],
 	"Modems": ["Inalámbricos", "Fibra óptica", "Cableados", "DSL", "Dial-Up"],

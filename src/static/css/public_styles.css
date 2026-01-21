@@ -1052,3 +1052,32 @@ body {
 .fa-spinner.fa-spin {
     animation: spin 1s linear infinite;
 }
+
+/* Estilos para indicadores de contraseña y badges */
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.badge-warning {
+    background-color: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeeba;
+}
+
+.badge-info {
+    background-color: #d1ecf1;
+    color: #0c5460;
+    border: 1px solid #bee5eb;
+}
+
+.password-indicator {
+    margin-top: 5px;
+    margin-bottom: 5px;
+}
