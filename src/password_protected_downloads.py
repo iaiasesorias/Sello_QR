@@ -27,6 +27,11 @@ def download_protected_file(file_id):
             if not password or password != DOWNLOAD_PASSWORD:
                 abort(401, description="Contraseña incorrecta o no proporcionada.")
         
+        # Si es una URL externa, simplemente retornamos éxito (200 OK)
+        # El frontend se encargará de abrir la URL externa si la respuesta es exitosa
+        if device_file.external_url:
+            return jsonify({"message": "Contraseña correcta", "external_url": device_file.external_url}), 200
+
         # Obtener la ruta del archivo desde la base de datos
         file_path = device_file.file_path
         

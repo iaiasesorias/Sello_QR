@@ -515,16 +515,28 @@ function displayFiles(files) {
 
     // Botón de descarga/visualización
     if (file.file_path || file.external_url) {
-      const downloadBtn = document.createElement("button"); // Cambiado a button
+      const downloadBtn = document.createElement("button");
       downloadBtn.className = "file-action-btn download-btn";
-      downloadBtn.innerHTML = '<i class="fas fa-download"></i> Descargar';
-      downloadBtn.onclick = () => {
-        if (file.requires_password) {
-          showPasswordModal(file.id);
-        } else {
-          window.open(`/api/download-protected-file/${encodeURIComponent(file.id)}`, '_blank');
-        }
-      };
+      
+      if (file.external_url) {
+        downloadBtn.innerHTML = '<i class="fas fa-external-link-alt"></i> Abrir Enlace';
+        downloadBtn.onclick = () => {
+          if (file.requires_password) {
+            showPasswordModal(file.id, true, file.external_url);
+          } else {
+            window.open(file.external_url, '_blank');
+          }
+        };
+      } else {
+        downloadBtn.innerHTML = '<i class="fas fa-download"></i> Descargar';
+        downloadBtn.onclick = () => {
+          if (file.requires_password) {
+            showPasswordModal(file.id);
+          } else {
+            window.open(`/api/download-protected-file/${encodeURIComponent(file.id)}`, '_blank');
+          }
+        };
+      }
       fileActions.appendChild(downloadBtn);
     }
 
@@ -649,7 +661,7 @@ function updateMetaTags(device) {
 
 // ===== MODAL DE CONTRASEÑA PARA DESCARGA SEGURA =====
 
-function showPasswordModal(fileId) {
+function showPasswordModal(fileId, isExternal = false, externalUrl = '') {
   // Crear el modal si no existe
   let modal = document.getElementById('passwordModal');
   if (!modal) {
@@ -663,7 +675,17 @@ function showPasswordModal(fileId) {
   
   // Configurar el botón de descarga para este archivo específico
   const downloadButton = document.getElementById('modalDownloadBtn');
-  downloadButton.onclick = () => downloadWithPassword(fileId);
+  const modalTitle = modal.querySelector('h3');
+  
+  if (isExternal) {
+    modalTitle.innerHTML = '<i class="fas fa-lock"></i> Enlace Protegido';
+    downloadButton.innerHTML = '<i class="fas fa-external-link-alt"></i> Abrir Enlace';
+    downloadButton.onclick = () => downloadWithPassword(fileId, true, externalUrl);
+  } else {
+    modalTitle.innerHTML = '<i class="fas fa-lock"></i> Descarga Protegida';
+    downloadButton.innerHTML = '<i class="fas fa-download"></i> Descargar';
+    downloadButton.onclick = () => downloadWithPassword(fileId);
+  }
   
   // Mostrar el modal
   modal.style.display = 'flex';
@@ -761,7 +783,7 @@ function togglePasswordVisibility() {
   }
 }
 
-function downloadWithPassword(fileId) {
+function downloadWithPassword(fileId, isExternal = false, externalUrl = '') {
   const passwordInput = document.getElementById('passwordInput');
   const password = passwordInput.value.trim();
   const errorDiv = document.getElementById('passwordError');
@@ -777,32 +799,40 @@ function downloadWithPassword(fileId) {
   
   // Mostrar estado de carga
   const originalText = downloadBtn.innerHTML;
-  downloadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Descargando...';
+  downloadBtn.innerHTML = isExternal ? '<i class="fas fa-spinner fa-spin"></i> Verificando...' : '<i class="fas fa-spinner fa-spin"></i> Descargando...';
   downloadBtn.disabled = true;
   
-  // Crear un enlace temporal para la descarga
-  const downloadUrl = `/api/download-protected-file/${encodeURIComponent(fileId)}?password=${encodeURIComponent(password)}`;
+  // URL para verificar la contraseña (usamos el endpoint de descarga con HEAD)
+  const verifyUrl = `/api/download-protected-file/${encodeURIComponent(fileId)}?password=${encodeURIComponent(password)}`;
   
-  // Verificar si la descarga es exitosa usando fetch
-  fetch(downloadUrl, { method: 'HEAD' })
-    .then(response => {
+  // Verificar si la contraseña es correcta usando fetch
+  fetch(verifyUrl, { method: 'GET' })
+    .then(async response => {
       if (response.ok) {
-        // Si la respuesta es exitosa, proceder con la descarga
-        window.open(downloadUrl, '_blank');
+        // Si la respuesta es exitosa, proceder
+        if (isExternal) {
+          window.open(externalUrl, '_blank');
+        } else {
+          window.open(verifyUrl, '_blank');
+        }
         closePasswordModal();
       } else if (response.status === 401) {
         // Contraseña incorrecta
         showPasswordError('Contenido restringido.');
       } else {
-        // Otro error
-        showPasswordError('Error al descargar el archivo. Por favor, inténtalo de nuevo.');
+        // Intentar obtener el mensaje de error del servidor
+        try {
+          const errorData = await response.json();
+          showPasswordError(errorData.description || 'Error al procesar la solicitud.');
+        } catch (e) {
+          showPasswordError('Error al procesar la solicitud. Por favor, inténtalo de nuevo.');
+        }
       }
     })
     .catch(error => {
-      console.error('Error al verificar la descarga:', error);
-      // En caso de error de red, intentar la descarga de todos modos
-      window.open(downloadUrl, '_blank');
-      closePasswordModal();
+      console.error('Error al verificar la contraseña:', error);
+      // En caso de error de red, mostrar error al usuario en lugar de abrir a ciegas
+      showPasswordError('Error de conexión. Por favor, verifica tu internet.');
     })
     .finally(() => {
       // Restaurar el botón

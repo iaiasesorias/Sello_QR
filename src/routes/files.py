@@ -100,10 +100,6 @@ def upload_device_files():
     if admin_error:
         return admin_error
     
-    if 'file' not in request.files:
-        return jsonify({'error': 'No se encontró archivo'}), 400
-    
-    file = request.files['file']
     device_id = request.form.get('device_id')
     file_type = request.form.get('file_type')
     visibility = request.form.get('visibility', 'public')
@@ -133,7 +129,12 @@ def upload_device_files():
         db.session.commit()
         
         return jsonify(device_file.to_dict()), 201
+
+    # Si no hay URL externa, se requiere un archivo
+    if 'file' not in request.files:
+        return jsonify({'error': 'No se encontró archivo ni URL externa'}), 400
     
+    file = request.files['file']
     if file.filename == '':
         return jsonify({'error': 'No se seleccionó archivo'}), 400
     
@@ -194,10 +195,6 @@ def upload_file():
     if admin_error:
         return admin_error
     
-    if 'file' not in request.files:
-        return jsonify({'error': 'No se encontró archivo'}), 400
-    
-    file = request.files['file']
     device_id = request.form.get('device_id')
     file_type = request.form.get('file_type')
     visibility = request.form.get('visibility', 'public')
@@ -227,7 +224,12 @@ def upload_file():
         db.session.commit()
         
         return jsonify(device_file.to_dict()), 201
+
+    # Si no hay URL externa, se requiere un archivo
+    if 'file' not in request.files:
+        return jsonify({'error': 'No se encontró archivo ni URL externa'}), 400
     
+    file = request.files['file']
     if file.filename == '':
         return jsonify({'error': 'No se seleccionó archivo'}), 400
     
@@ -315,12 +317,12 @@ def delete_file(file_id):
     # Eliminar archivo físico si existe
     if device_file.file_path:
         base_upload_folder = current_app.config['UPLOAD_FOLDER']
-    file_path_absolute = os.path.join(base_upload_folder, device_file.file_path)
-    if os.path.exists(file_path_absolute):
-        try:
-            os.remove(file_path_absolute)
-        except Exception as e:
-            print(f"Error al eliminar archivo físico: {e}")
+        file_path_absolute = os.path.join(base_upload_folder, device_file.file_path)
+        if os.path.exists(file_path_absolute):
+            try:
+                os.remove(file_path_absolute)
+            except Exception as e:
+                print(f"Error al eliminar archivo físico: {e}")
     
     db.session.delete(device_file)
     db.session.commit()

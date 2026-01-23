@@ -543,10 +543,11 @@ def delete_brand(brand_name):
             brand_images = DeviceFile.query.filter_by(device_id=device.id, file_type="imagen_marca").all()
             for img in brand_images:
                 # Construir la ruta completa para eliminar el archivo
-                base_upload_folder = current_app.config['UPLOAD_FOLDER']
-                full_path = os.path.join(base_upload_folder, img.file_path)
-                if os.path.exists(full_path):
-                    os.remove(full_path)
+                if img.file_path:
+                    base_upload_folder = current_app.config['UPLOAD_FOLDER']
+                    full_path = os.path.join(base_upload_folder, img.file_path)
+                    if os.path.exists(full_path):
+                        os.remove(full_path)
                 db.session.delete(img)
 
             # Eliminar el dispositivo
@@ -592,7 +593,7 @@ def get_brand_image(brand_name):
             brand_image = DeviceFile.query.filter_by(device_id=temp_device.id, file_type="imagen_marca").first()
             
             base_upload_folder = current_app.config['UPLOAD_FOLDER']
-            if not brand_image or not os.path.exists(os.path.join(base_upload_folder, brand_image.file_path)):
+            if not brand_image or not brand_image.file_path or not os.path.exists(os.path.join(base_upload_folder, brand_image.file_path)):
                 return jsonify({"error": "Imagen no encontrada para esta marca"}), 404
             
             # Usar la ruta de DeviceFile
