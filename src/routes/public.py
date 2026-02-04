@@ -299,6 +299,21 @@ def view_device(device_id):
     
     return render_template_string(DEVICE_PUBLIC_TEMPLATE, device=device)
 
+@public_bp.route('/api/device/by-uuid/<string:device_uuid>')
+def get_device_by_uuid_api(device_uuid):
+    """API pública para obtener información del dispositivo por UUID"""
+    device = Device.query.filter_by(uuid=device_uuid).first_or_404()
+    
+    # Verificar si el dispositivo está vigente
+    from datetime import datetime
+    if device.fecha_vigencia and device.fecha_vigencia > datetime.now().date():
+        return jsonify({
+            'error': 'Dispositivo no disponible',
+            'message': 'Este dispositivo aún no está vigente para consulta pública.'
+        }), 404
+        
+    return jsonify(device.to_dict())
+
 @public_bp.route('/api/device/<int:device_id>')
 def get_device_api(device_id):
     """API pública para obtener información del dispositivo en formato JSON"""

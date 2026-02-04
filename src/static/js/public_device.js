@@ -6,8 +6,9 @@ document.addEventListener("DOMContentLoaded", function () {
 async function loadDeviceInfo() {
   const urlParams = new URLSearchParams(window.location.search);
   const deviceId = urlParams.get("id");
+  const deviceUid = urlParams.get("uid"); // CAMBIO: leer 'uid' en lugar de 'id'
 
-  if (!deviceId) {
+  if (!deviceId && !deviceUid) {
     showError();
     return;
   }
@@ -15,7 +16,13 @@ async function loadDeviceInfo() {
   try {
     // Agregar timestamp para evitar caché del navegador
     const timestamp = new Date().getTime();
-    const response = await fetch(`/api/device/${deviceId}?_t=${timestamp}`, {
+    
+    // Determinar el endpoint a usar
+    const endpoint = deviceUid 
+      ? `/api/device/by-uuid/${deviceUid}` 
+      : `/api/device/${deviceId}`;
+      
+    const response = await fetch(`${endpoint}?_t=${timestamp}`, {
       method: "GET",
       headers: {
         "Cache-Control": "no-cache, no-store, must-revalidate",

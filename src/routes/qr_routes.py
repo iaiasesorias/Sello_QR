@@ -27,7 +27,8 @@ def generate_device_qr(device_id):
     
     # Crear la URL para la página de datos del dispositivo
     base_url = request.url_root
-    device_url = urljoin(base_url, f"public_device.html?id={device_id}")
+    # USAR UUID EN LA URL
+    device_url = urljoin(base_url, f"public_device.html?uid={device.uuid}")
     
     # Generar código QR
     qr = qrcode.QRCode(

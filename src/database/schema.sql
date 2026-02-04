@@ -9,6 +9,7 @@ CREATE TABLE user (
 );
 CREATE TABLE device (
 	id INTEGER NOT NULL, 
+	uuid VARCHAR(36) NOT NULL UNIQUE,
 	marca VARCHAR(100) NOT NULL, 
 	nombre_catalogo VARCHAR(200) NOT NULL, 
 	modelo_comercial VARCHAR(100) NOT NULL, 

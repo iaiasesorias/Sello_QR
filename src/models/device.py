@@ -1,8 +1,10 @@
 from src.models.user import db
 from datetime import datetime
+import uuid
 
 class Device(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    uuid = db.Column(db.String(36), unique=True, nullable=False, default=lambda: str(uuid.uuid4()))
     marca = db.Column(db.String(100), nullable=False)
     nombre_catalogo = db.Column(db.String(200), nullable=False)
     modelo_comercial = db.Column(db.String(100), nullable=False)
@@ -34,6 +36,7 @@ class Device(db.Model):
     def to_dict(self):
         return {
             'id': self.id,
+            'uuid': self.uuid,
             'marca': self.marca,
             'nombre_catalogo': self.nombre_catalogo,
             'modelo_comercial': self.modelo_comercial,

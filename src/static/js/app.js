@@ -53,6 +53,14 @@ async function checkAuthStatus() {
         if (qrToken && brandName) {
             const qrAuthResult = await validateQRToken(qrToken, brandName);
             if (qrAuthResult.success) {
+                // GUARDAR Y LIMPIAR URL
+                sessionStorage.setItem('qr_token', qrToken);
+                sessionStorage.setItem('selectedBrand', brandName);
+                
+                // Limpiar la barra de direcciones sin recargar la página
+                const newUrl = window.location.pathname;
+                window.history.replaceState({}, document.title, newUrl);
+                
                 // Token QR válido, mostrar dashboard con acceso limitado
                 currentUser = qrAuthResult.user;
                 showDashboard();
@@ -224,6 +232,10 @@ function showDashboard() {
     const urlParams = new URLSearchParams(window.location.search);
     const selectedBrand = urlParams.get('brand') || sessionStorage.getItem('selectedBrand');
     
+
+                document.getElementById("categoryFilter").value = ""; // Asegura que la opción por defecto esté seleccionada
+                filterDevices();
+
     if (selectedBrand) {
         // Mostrar indicador de marca seleccionada
         showBrandIndicator(selectedBrand);
@@ -235,13 +247,10 @@ function showDashboard() {
             });
         });
     } else {
-        // Cargar todos los dispositivos
-        loadDevices().then(() => {
-            loadCategories().then(() => {
-                document.getElementById("categoryFilter").value = ""; // Asegura que la opción por defecto esté seleccionada
-                filterDevices();
-            });
-        });
+        // Si no hay marca seleccionada, no cargar dispositivos automáticamente
+        // Esto evita que se muestren todos los dispositivos al entrar a index.html directamente
+        console.log("No hay marca seleccionada, esperando selección.");
+        document.getElementById("devicesGrid").innerHTML = "";
     }
 }
 
@@ -370,7 +379,7 @@ function renderFilteredDevices(filteredDevices) {
     const grid = document.getElementById("devicesGrid");
 
     grid.innerHTML = filteredDevices.map(device => `
-        <div class="device-card" onclick="${currentUser && (currentUser.role === 'public' || currentUser.role === 'qr_guest') ? `openDeviceUrl('/static/public_device.html?id=${device.id}')` : ''}">
+        <div class="device-card" onclick="${currentUser && (currentUser.role === 'public' || currentUser.role === 'qr_guest') ? `openDeviceUrl('/static/public_device.html?uid=${device.uuid}')` : ''}">
 	    <div class="device-header">
 	        <class="device-title">${device.nombre_catalogo}
 	    </div>
@@ -382,7 +391,7 @@ function renderFilteredDevices(filteredDevices) {
             </div>
             <div class="device-actions">
                 ${currentUser && (currentUser.role !== 'public' && currentUser.role !== 'qr_guest') ? `
-                <button class="btn btn-outline" onclick="openDeviceUrl('/static/public_device.html?id=${device.id}')" title="Ver Página Pública">
+                <button class="btn btn-outline" onclick="openDeviceUrl('/static/public_device.html?uid=${device.uuid}')" title="Ver Página Pública">
                     <i class="fas fa-external-link-alt"></i>
                 </button>
                 ` : ''}
@@ -1088,7 +1097,7 @@ async function showDeviceQR(deviceId) {
                         <div class="qr-actions">
                             <button class="btn btn-primary" onclick="downloadQR('${data.qr_code}', '${data.device.marca}_${data.device.modelo_comercial}_QR')">
                                 <i class="fas fa-download"></i> Descargar QR
-                            </button>                            <button class="btn btn-outline" onclick="openDeviceUrl(\'/static/public_device.html?id=${data.device.id}\')">                                <i class="fas fa-external-link-alt"></i> Ver Página Pública
+                            </button>                            <button class="btn btn-outline" onclick="openDeviceUrl(\'/static/public_device.html?uid=${data.device.uuid}\')">                                <i class="fas fa-external-link-alt"></i> Ver Página Pública
                             </button>
                         </div>
                     </div>
