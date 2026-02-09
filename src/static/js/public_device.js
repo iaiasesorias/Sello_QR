@@ -471,50 +471,92 @@ function displayFiles(files) {
     const fileInfo = document.createElement("div");
     fileInfo.className = "file-info";
 
+    const fileMainInfo = document.createElement("div");
+    fileMainInfo.className = "file-main-info";
+
     const fileName = document.createElement("div");
     fileName.className = "file-name";
-    fileName.textContent = file.filename || `${index + 1} \u00A0 `;
+    
+    // Priorizar el nombre real del archivo
+    let nameToDisplay = file.file_name || file.filename || file.original_filename;
+    
+    // Si no hay nombre pero hay una URL externa, intentar extraerlo de la URL
+    if (!nameToDisplay && file.external_url) {
+        try {
+            // Obtener la parte final de la URL después de la última barra
+            const urlParts = file.external_url.split('/');
+            let lastPart = urlParts.pop() || urlParts.pop(); // Manejar posibles barras finales
+            
+            // Eliminar parámetros de consulta (?...) o fragmentos (#...)
+            if (lastPart) {
+                const cleanName = lastPart.split(/[?#]/)[0];
+                // Solo usar si parece un nombre de archivo (tiene extensión)
+                if (cleanName && cleanName.includes('.')) {
+                    nameToDisplay = cleanName;
+                }
+            }
+        } catch (e) {
+            console.error("Error al extraer nombre de URL:", e);
+        }
+    }
+    
+    // Si no hay nombre pero hay ruta local, extraerlo de la ruta
+    if (!nameToDisplay && file.file_path) {
+        nameToDisplay = file.file_path.split(/[/\\]/).pop();
+    }
+    
+    // Si sigue sin haber nombre, usar el tipo de archivo o un genérico
+    if (!nameToDisplay) {
+        nameToDisplay = file.file_type ? formatFileType(file.file_type) : `Archivo ${index + 1}`;
+    }
+    
+    fileName.textContent = nameToDisplay;
 
-    const fileType = document.createElement("div");
-    fileType.className = "file-type";
+    const fileMetaRow = document.createElement("div");
+    fileMetaRow.className = "file-meta-row";
+
+    const fileType = document.createElement("span");
+    fileType.className = "file-type-badge";
     fileType.textContent = formatFileType(file.file_type);
 
     // Indicador de Password
-    const passwordIndicator = document.createElement("div");
-    passwordIndicator.className = "password-indicator";
+    const passwordIndicator = document.createElement("span");
+    passwordIndicator.className = "password-badge";
     if (file.requires_password) {
-      passwordIndicator.innerHTML = '<span class="badge badge-warning"><i class="fas fa-lock"></i> Password Habilitado</span>';
+      passwordIndicator.innerHTML = '<i class="fas fa-lock"></i> Protegido';
+      passwordIndicator.classList.add("protected");
     } else {
-      passwordIndicator.innerHTML = '<span class="badge badge-info"><i class="fas fa-lock-open"></i> Password No Habilitado</span>';
+      passwordIndicator.innerHTML = '<i class="fas fa-lock-open"></i> Público';
+      passwordIndicator.classList.add("public");
     }
 
     const fileDetails = document.createElement("div");
-    fileDetails.className = "file-details";
+    fileDetails.className = "file-extra-details";
 
-    // Mostrar fecha si está disponible
     if (file.upload_date || file.created_at) {
       const fileDate = document.createElement("span");
       fileDate.className = "file-date";
-      fileDate.textContent = `Fecha: ${formatDate(
-        file.upload_date || file.created_at
-      )}`;
+      fileDate.innerHTML = `<i class="far fa-calendar-alt"></i> ${formatDate(file.upload_date || file.created_at)}`;
       fileDetails.appendChild(fileDate);
     }
 
-    // Mostrar tamaño si está disponible
     if (file.file_size && file.file_size > 0) {
       const fileSize = document.createElement("span");
       fileSize.className = "file-size";
-      fileSize.textContent = `Tamaño: ${formatFileSize(file.file_size)}`;
+      fileSize.innerHTML = `<i class="fas fa-hdd"></i> ${formatFileSize(file.file_size)}`;
       fileDetails.appendChild(fileSize);
     }
 
-    fileInfo.appendChild(fileName);
-    fileInfo.appendChild(fileType);
-    fileInfo.appendChild(passwordIndicator);
+    fileMainInfo.appendChild(fileName);
+    
+    fileMetaRow.appendChild(fileType);
+    fileMetaRow.appendChild(passwordIndicator);
     if (fileDetails.children.length > 0) {
-      fileInfo.appendChild(fileDetails);
+        fileMetaRow.appendChild(fileDetails);
     }
+    
+    fileInfo.appendChild(fileMainInfo);
+    fileInfo.appendChild(fileMetaRow);
 
     // Botones de acción
     const fileActions = document.createElement("div");

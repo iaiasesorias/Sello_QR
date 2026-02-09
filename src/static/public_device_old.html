@@ -20,8 +20,8 @@
             gap: 20px;
             max-width: 1200px;
             margin: 0 auto;
-            padding: 0 20px; /* Añadir padding horizontal para evitar que el contenido toque los bordes */
-	    align-items: stretch;
+            padding: 0 20px;
+            align-items: stretch; /* Fuerza a que los elementos de la misma fila tengan la misma altura */
         }
         
         .device-info-column {
@@ -60,6 +60,7 @@
         }
         
         .image-card {
+	    background: white;
             display: flex;
             flex-direction: column;
             align-items: stretch;
@@ -72,7 +73,8 @@
         
         .technical-image-container {
             grid-column: 1 / -1;
-            margin-bottom: 20px;
+            margin-bottom: 10px;
+            margin-top: -10px;
             display: none;
         }
         
@@ -80,28 +82,28 @@
             background: white;
             border-radius: 12px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            padding: 20px;
+            padding: 0; /* Eliminado padding para que la imagen abarque todo */
             display: flex;
             flex-direction: column;
             align-items: center;
+            overflow: hidden;
         }
         
         .technical-image-card h3 {
-            margin-top: 0;
-            margin-bottom: 15px;
+            margin: 15px 20px 10px 20px; /* Restaurado padding para el título */
             color: #333;
             font-size: 1.2em;
-            width: 100%;
+            width: calc(100% - 40px);
             border-bottom: 2px solid #f0f0f0;
-            padding-bottom: 10px;
+            padding-bottom: 8px;
         }
         
         #technicalImage {
             width: 100%;
             height: auto;
-            max-height: 1200px;
-            object-fit: contain;
-            border-radius: 8px;
+            max-height: none; /* Eliminado límite para que abarque todo */
+            object-fit: cover;
+            border-radius: 0 0 12px 12px; /* Solo redondeado inferior */
             display: block;
         }
         
@@ -111,12 +113,10 @@
             justify-content: center;
             align-items: center;
             overflow: hidden;
-            background-color: #ffffff;
-            border-radius: 0;
-            border: none;
-            box-shadow: none;
-            min-height: 200px;
+            background-color: white; /* Asegurado fondo blanco */
+            border-radius: 8px;
             flex: 1;
+            min-height: 200px;
         }
         
         .no-image-placeholder {

@@ -282,16 +282,7 @@ function showDeviceForm(deviceId = null) {
         loadCategoriesForNewDevice();
     }
     
-    // Configurar event listeners para el formulario
-    const categoriaSelect = document.getElementById("categoria");
-    const subcategoriaSelect = document.getElementById("subcategoria");
-    
-    if (categoriaSelect) {
-        categoriaSelect.addEventListener("change", loadCategoriesForForm);
-    }
-    //if (subcategoriaSelect) {
-    //    subcategoriaSelect.addEventListener("change", loadGroups);
-    //}
+    // Los event listeners ya están configurados mediante atributos 'onchange' en el HTML
 }
 
 function updateUserInfo() {
@@ -475,6 +466,8 @@ async function loadCategoriesForForm(initialCategories = []) {
     const subcategoriaSelect = document.getElementById("subcategoria");
     const grupoSelect = document.getElementById("grupo");
 
+    if (!categoriaSelect) return;
+
     // Populate initial categories dropdown if provided
     if (initialCategories.length > 0 && categoriaSelect.options.length <= 1) { // Only populate if not already populated
         initialCategories.forEach(category => {
@@ -488,8 +481,8 @@ async function loadCategoriesForForm(initialCategories = []) {
     const selectedCategoria = categoriaSelect.value;
 
     // Reset subcategory and group
-    subcategoriaSelect.innerHTML = '<option value="">Seleccionar subcategoría</option>';
-    grupoSelect.innerHTML = '<option value="">Seleccionar grupo</option>';
+    if (subcategoriaSelect) subcategoriaSelect.innerHTML = '<option value="">Seleccionar subcategoría</option>';
+    if (grupoSelect) grupoSelect.innerHTML = '<option value="">Seleccionar grupo</option>';
 
     if (!selectedCategoria) return;
 
@@ -500,22 +493,31 @@ async function loadCategoriesForForm(initialCategories = []) {
 
         if (response.ok) {
             const subcategories = await response.json();
-            subcategories.forEach(subcategory => {
-                const option = document.createElement('option');
-                option.value = subcategory;
-                option.textContent = subcategory;
-                subcategoriaSelect.appendChild(option);
-            });
+            if (subcategoriaSelect) {
+                subcategories.forEach(subcategory => {
+                    const option = document.createElement('option');
+                    option.value = subcategory;
+                    option.textContent = subcategory;
+                    subcategoriaSelect.appendChild(option);
+                });
+            }
+            return subcategories;
         }
     } catch (error) {
         console.error('Error loading subcategories:', error);
     }
+    return [];
 }
 
 async function loadGroups() {
-    const categoria = document.getElementById('categoria').value;
-    const subcategoria = document.getElementById('subcategoria').value;
+    const categoriaElement = document.getElementById('categoria');
+    const subcategoriaElement = document.getElementById('subcategoria');
     const grupoSelect = document.getElementById('grupo');
+    
+    if (!categoriaElement || !subcategoriaElement || !grupoSelect) return;
+    
+    const categoria = categoriaElement.value;
+    const subcategoria = subcategoriaElement.value;
     
     // Reset group
     grupoSelect.innerHTML = '<option value="">Seleccionar grupo</option>';
@@ -535,10 +537,12 @@ async function loadGroups() {
                 option.textContent = group;
                 grupoSelect.appendChild(option);
             });
+            return groups;
         }
     } catch (error) {
         console.error('Error loading groups:', error);
     }
+    return [];
 }
 
 async function handleDeviceSubmit(e) {
@@ -684,7 +688,23 @@ async function uploadDeviceFiles(deviceId, formData) {
         
         if (externalUrl) {
             uploadFormData.append('external_url', externalUrl);
-            uploadFormData.append('file_name', `Documento ${fileType}`);
+            
+            // Intentar extraer el nombre del archivo de la URL
+            let fileNameFromUrl = `Documento ${fileType}`;
+            try {
+                const urlParts = externalUrl.split('/');
+                let lastPart = urlParts.pop() || urlParts.pop();
+                if (lastPart) {
+                    const cleanName = lastPart.split(/[?#]/)[0];
+                    if (cleanName && cleanName.includes('.')) {
+                        fileNameFromUrl = cleanName;
+                    }
+                }
+            } catch (e) {
+                console.error("Error al extraer nombre de URL:", e);
+            }
+            
+            uploadFormData.append('file_name', fileNameFromUrl);
         }
         
         try {
@@ -770,28 +790,22 @@ function populateDeviceForm(device) {
     if (grupoField) grupoField.value = device.grupo || '';
     
     // Load categories for editing
-    loadCategoriesForNewDevice().then(() => {
+    loadCategoriesForNewDevice().then(async () => {
         // Set the category value after loading
         if (categoriaField && device.categoria) {
             categoriaField.value = device.categoria;
-            // Trigger change event to load subcategories
-            categoriaField.dispatchEvent(new Event('change'));
+            // Trigger loadCategoriesForForm manually to return a promise
+            await loadCategoriesForForm();
             
-            // Set subcategory after a brief delay
-            setTimeout(() => {
-                if (subcategoriaField && device.subcategoria) {
-                    subcategoriaField.value = device.subcategoria;
-                    // Trigger change event to load groups
-                    subcategoriaField.dispatchEvent(new Event('change'));
-                    
-                    // Set group after a brief delay
-                    setTimeout(() => {
-                        if (grupoField && device.grupo) {
-                            grupoField.value = device.grupo;
-                        }
-                    }, 100);
+            if (subcategoriaField && device.subcategoria) {
+                subcategoriaField.value = device.subcategoria;
+                // Trigger loadGroups manually to return a promise
+                await loadGroups();
+                
+                if (grupoField && device.grupo) {
+                    grupoField.value = device.grupo;
                 }
-            }, 100);
+            }
         }
     });
     
@@ -830,10 +844,33 @@ function populateDeviceForm(device) {
 
 function renderExistingFiles(files) {
     const filesContainer = document.getElementById('filesContainer');
-    filesContainer.innerHTML = files.map(file => `
+    filesContainer.innerHTML = files.map(file => {
+        // Lógica para determinar el nombre a mostrar
+        let nameToDisplay = file.file_name || file.filename;
+        
+        if (!nameToDisplay && file.external_url) {
+            try {
+                const urlParts = file.external_url.split('/');
+                let lastPart = urlParts.pop() || urlParts.pop();
+                if (lastPart) {
+                    const cleanName = lastPart.split(/[?#]/)[0];
+                    if (cleanName && cleanName.includes('.')) {
+                        nameToDisplay = cleanName;
+                    }
+                }
+            } catch (e) {
+                console.error("Error al extraer nombre de URL:", e);
+            }
+        }
+        
+        if (!nameToDisplay) {
+            nameToDisplay = file.file_type ? file.file_type.replace('_', ' ').toUpperCase() : 'Archivo';
+        }
+
+        return `
         <div class="file-input-group">
             <div class="file-input-header">
-                <span class="file-input-title">${file.file_name}</span>
+                <span class="file-input-title">${nameToDisplay}</span>
                 <button type="button" class="btn btn-danger" onclick="deleteFile(${file.id})" title="Eliminar Archivo">
                     <i class="fas fa-trash"></i>
                 </button>
@@ -862,7 +899,8 @@ function renderExistingFiles(files) {
                 ` : ''}
             </div>
         </div>
-    `).join('');
+    `;
+    }).join('');
 }
 
 async function deleteDevice(deviceId) {

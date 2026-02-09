@@ -458,9 +458,12 @@ body {
     justify-content: center;
     align-items: center;
     min-height: 300px;
-    border-radius: 15px;
+    border-radius: 0;
     overflow: hidden;
     position: relative;
+    background-color: #ffffff;
+    border: none;
+    box-shadow: none;
 }
 
 .no-image-placeholder {
@@ -468,11 +471,11 @@ body {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    background: var(--background-color);
+    background: #ffffff;
     color: var(--text-secondary);
     width: 100%;
     height: 300px;
-    border: 2px dashed var(--border-color);
+    border: none;
     border-radius: 15px;
     transition: all 0.3s ease;
     position: absolute;
@@ -498,7 +501,7 @@ body {
     width: auto;
     height: auto;
     border-radius: 10px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    box-shadow: none;
     transition: transform 0.3s ease;
     display: block;
     z-index: 2;
@@ -610,7 +613,11 @@ body {
     display: flex;
     flex-direction: column;
     gap: 15px;
+    max-height: 400px; /* ajusta según tu diseño */
+    overflow-y: auto;  /* activa la barra lateral */
+    padding-right: 5px; /* espacio para que no tape el contenido */
 }
+
 
 .file-item {
     display: flex;
@@ -723,7 +730,7 @@ body {
     padding: 30px;
     background: var(--background-color);
     border-radius: 12px;
-    border: 2px dashed var(--border-color);
+    border: none;
 }
 
 /* Iconos específicos por tipo de archivo */
