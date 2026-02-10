@@ -86,6 +86,15 @@
             align-items: center;
         }
         
+        @media (max-width: 768px) {
+            .technical-image-card {
+                padding: 10px;
+            }
+            .technical-image-card .image-content {
+                min-height: auto;
+            }
+        }
+        
         .technical-image-card h3 {
             margin-top: 0;
             margin-bottom: 15px;
@@ -117,6 +126,12 @@
             box-shadow: none;
             min-height: 200px;
             flex: 1;
+        }
+        
+        @media (max-width: 768px) {
+            .image-content {
+                min-height: auto;
+            }
         }
         
         .no-image-placeholder {

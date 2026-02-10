@@ -312,7 +312,40 @@ def get_device_by_uuid_api(device_uuid):
             'message': 'Este dispositivo aún no está vigente para consulta pública.'
         }), 404
         
-    return jsonify(device.to_dict())
+    # Usar el método to_dict() del modelo que incluye todos los campos
+    device_data = device.to_dict()
+    
+    # Importar DeviceDoc para buscar la información de documentación
+    from src.models.device_doc import DeviceDoc
+    
+    # Buscar la información de documentación (insensible a mayúsculas/minúsculas y espacios)
+    from sqlalchemy import func
+    device_doc = DeviceDoc.query.filter(
+        func.lower(func.trim(DeviceDoc.marca)) == func.lower(func.trim(device.marca)),
+        func.lower(func.trim(DeviceDoc.nombre_catalogo)) == func.lower(func.trim(device.nombre_catalogo)),
+        func.lower(func.trim(DeviceDoc.modelo_comercial)) == func.lower(func.trim(device.modelo_comercial)),
+        func.lower(func.trim(DeviceDoc.modelo_tecnico)) == func.lower(func.trim(device.modelo_tecnico))
+    ).first()
+    
+    # Agregar los campos de device_doc a device_data si existen
+    if device_doc:
+        device_data['tecnologia_modulacion_doc'] = device_doc.tecnologia_modulacion_doc
+        device_data['frecuencias_doc'] = device_doc.frecuencias_doc
+        device_data['ganancia_antena_doc'] = device_doc.ganancia_antena_doc
+        device_data['pire_dbm_doc'] = device_doc.pire_dbm_doc
+        device_data['pire_mw_doc'] = device_doc.pire_mw_doc
+    else:
+        # Asegurar que los campos existen aunque estén vacíos
+        device_data['tecnologia_modulacion_doc'] = None
+        device_data['frecuencias_doc'] = None
+        device_data['ganancia_antena_doc'] = None
+        device_data['pire_dbm_doc'] = None
+        device_data['pire_mw_doc'] = None
+    
+    # Filtrar solo archivos públicos
+    device_data['files'] = [file.to_dict() for file in device.files if file.visibility == 'public']
+    
+    return jsonify(device_data)
 
 @public_bp.route('/api/device/<int:device_id>')
 def get_device_api(device_id):
@@ -335,12 +368,13 @@ def get_device_api(device_id):
     # Importar DeviceDoc para buscar la información de documentación
     from src.models.device_doc import DeviceDoc
     
-    # Buscar la información de documentación
-    device_doc = DeviceDoc.query.filter_by(
-        marca=device.marca,
-        nombre_catalogo=device.nombre_catalogo,
-        modelo_comercial=device.modelo_comercial,
-        modelo_tecnico=device.modelo_tecnico
+    # Buscar la información de documentación (insensible a mayúsculas/minúsculas y espacios)
+    from sqlalchemy import func
+    device_doc = DeviceDoc.query.filter(
+        func.lower(func.trim(DeviceDoc.marca)) == func.lower(func.trim(device.marca)),
+        func.lower(func.trim(DeviceDoc.nombre_catalogo)) == func.lower(func.trim(device.nombre_catalogo)),
+        func.lower(func.trim(DeviceDoc.modelo_comercial)) == func.lower(func.trim(device.modelo_comercial)),
+        func.lower(func.trim(DeviceDoc.modelo_tecnico)) == func.lower(func.trim(device.modelo_tecnico))
     ).first()
     
     # Agregar los campos de device_doc a device_data si existen

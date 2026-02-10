@@ -1,4 +1,5 @@
 from src.models.user import db
+from src.models.device_doc import DeviceDoc
 from datetime import datetime
 import uuid
 
@@ -57,8 +58,26 @@ class Device(db.Model):
             'grupo': self.grupo,
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None,
-            'files': [file.to_dict() for file in self.files]
+            'files': [file.to_dict() for file in self.files],
+            'device_doc': self.get_device_doc()
         }
+
+    def get_device_doc(self):
+        doc = DeviceDoc.query.filter_by(
+            marca=self.marca,
+            nombre_catalogo=self.nombre_catalogo,
+            modelo_comercial=self.modelo_comercial,
+            modelo_tecnico=self.modelo_tecnico
+        ).first()
+        if doc:
+            return {
+                'tecnologia_modulacion_doc': doc.tecnologia_modulacion_doc,
+                'frecuencias_doc': doc.frecuencias_doc,
+                'ganancia_antena_doc': doc.ganancia_antena_doc,
+                'pire_dbm_doc': doc.pire_dbm_doc,
+                'pire_mw_doc': doc.pire_mw_doc
+            }
+        return None
 
 class DeviceFile(db.Model):
     id = db.Column(db.Integer, primary_key=True)

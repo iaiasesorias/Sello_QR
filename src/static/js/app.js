@@ -837,6 +837,24 @@ function populateDeviceForm(device) {
 
         const pireMwField = document.getElementById('pire_mw');
     if (pireMwField) pireMwField.value = device.pire_mw === null ? 0.0 : device.pire_mw;
+
+    // Populate device_doc fields
+    if (device.device_doc) {
+        const tecnologiaModulacionDocField = document.getElementById('tecnologia_modulacion_doc');
+        if (tecnologiaModulacionDocField) tecnologiaModulacionDocField.value = device.device_doc.tecnologia_modulacion_doc || '';
+
+        const frecuenciasDocField = document.getElementById('frecuencias_doc');
+        if (frecuenciasDocField) frecuenciasDocField.value = device.device_doc.frecuencias_doc || '';
+
+        const gananciaAntenaDocField = document.getElementById('ganancia_antena_doc');
+        if (gananciaAntenaDocField) gananciaAntenaDocField.value = device.device_doc.ganancia_antena_doc || '';
+
+        const pireDbmDocField = document.getElementById('pire_dbm_doc');
+        if (pireDbmDocField) pireDbmDocField.value = device.device_doc.pire_dbm_doc || '';
+
+        const pireMwDocField = document.getElementById('pire_mw_doc');
+        if (pireMwDocField) pireMwDocField.value = device.device_doc.pire_mw_doc || '';
+    }
     
     // Load files if any
     renderExistingFiles(device.files);

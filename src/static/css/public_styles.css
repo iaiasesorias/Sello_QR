@@ -534,7 +534,7 @@ body {
     }
     
     .image-content {
-        min-height: 250px;
+        min-height: auto;
     }
     
     .no-image-placeholder {
@@ -558,7 +558,7 @@ body {
     }
     
     .image-content {
-        min-height: 200px;
+        min-height: auto;
     }
     
     .no-image-placeholder {
@@ -584,7 +584,7 @@ body {
     }
     
     .image-content {
-        min-height: 180px;
+        min-height: auto;
     }
     
     .no-image-placeholder {
